@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO.Ports;
 using System.Threading;
+using System.Linq;
 using ZedGraph;
 
 namespace Arduino
@@ -15,7 +17,17 @@ namespace Arduino
     {
         public bool ArduinoFound = false;
         public SerialPort ArduinoPort = null;
-       
+
+        //Learning Variables
+        const int learnSampleSize = 15000;
+        Dictionary<double, string> voltSignature = new Dictionary<double, string>();
+
+        //Rolling stats variables
+        public Queue<double> rollingAvgVolts;
+        public double rollingAvgSum = 0;
+        public double rollingAvg = -9999999;
+        public long rollCt = 0;
+
         //ZedGraph Controls
         ZedGraphControl a0Graph;
         GraphPane a0GraphPane;
@@ -33,6 +45,9 @@ namespace Arduino
             a0GraphPane = zgc.GraphPane;
             LineItem curve = a0GraphPane.CurveList[0] as LineItem;
             a0PointsList = curve.Points as IPointListEdit;
+
+            //Create stats tracking objects
+            rollingAvgVolts = new Queue<double>(learnSampleSize);
         }
 
         public void sendCmd(ArduinoControllerCmd commandNo, byte arg1 = 0, byte arg2 = 0, SerialPort arduinoPort = null)
@@ -97,15 +112,59 @@ namespace Arduino
                 if (yPointer == 300) a0PointsList.Clear();
                 yPointer = yPointer < 300 ? yPointer + 1 : 0;
 
-                //Console.WriteLine( Convert.ToString(arduinoPort.ReadByte()) );
-
-                //add the latest reading from arduino
-                //updateGraph((Convert.ToInt32(arduinoPort.ReadByte())));
-                //Thread.Sleep(2);
+                //Track rolling average volts for last learnSampleSize samples
+                updateStats(volts);
             }
 
             updateGraph();
             Thread.Sleep(5);
+        }
+
+        public void updateStats(double volt)
+        {
+            rollingAvgSum += volt;
+
+            if (rollingAvgVolts.Count < learnSampleSize)
+            {
+                rollingAvgVolts.Enqueue(volt);
+            }
+            else
+            {
+                double subtVolt = rollingAvgVolts.Dequeue();
+                rollingAvgSum -= subtVolt;
+                rollingAvg = rollingAvgSum / learnSampleSize;
+            }
+
+            rollCt = rollCt <= long.MaxValue ? rollCt++ : 0;
+        }
+
+        public void Learn(string learnName)
+        {
+            rollCt = 0;
+
+            //Wait till we have captured a big enough sample
+            while (rollCt < learnSampleSize)
+            {
+                Thread.Sleep(10);
+            }
+
+            //Save the rolling average volts indexed by volts and by name
+            voltSignature.Add(rollingAvg, learnName);
+        }
+
+        public string Predict()
+        {
+            rollCt = 0;
+            double halfCt = (double)learnSampleSize / 2;
+
+            //Wait till we have captured a big enough sample
+            while (rollCt < halfCt)
+            {
+                Thread.Sleep(10);
+            }
+
+            double closestSignature = (double)NumberFinder.FindClosestTo(voltSignature.Keys, rollingAvg);
+            return voltSignature[closestSignature];
         }
 
         private void updateGraph() //int yValue)
@@ -127,5 +186,60 @@ namespace Arduino
             }
         }
 
+    }
+
+    public static class NumberFinder
+    {
+        /// <summary>
+        ///   http://stackoverflow.com/questions/1988937/find-the-closest-number-in-a-list-of-numbers
+        /// </summary>
+        /// <param name="numbers"></param>
+        /// <param name="x"></param>
+        /// <returns></returns>
+        /// 
+        public static double? FindClosestTo(this IEnumerable<double> numbers, double targetNumber)
+        {
+            var minimumDistance = numbers
+                .Select(number => new NumberDistance(targetNumber, number))
+                .Min();
+
+            return minimumDistance == null ? (double?)null : minimumDistance.Number;
+        }
+    }
+
+    /// <summary>
+    /// Modified this code to support double:
+    /// http://stackoverflow.com/questions/1988937/find-the-closest-number-in-a-list-of-numbers
+    /// </summary>
+    public class NumberDistance : IComparable<NumberDistance>
+    {
+        internal NumberDistance(double targetNumber, double number)
+        {
+            this.Number = number;
+            this.Distance = Math.Abs(targetNumber - number);
+        }
+
+        internal double Number { get; private set; }
+
+        internal double Distance { get; private set; }
+
+        public int CompareTo(NumberDistance other)
+        {
+            var comparison = this.Distance.CompareTo(other.Distance);
+
+            if(comparison == 0)
+            {
+                // When they have the same distance, pick the number closest to zero
+                comparison = Math.Abs(this.Number).CompareTo(Math.Abs(other.Number));
+
+                if(comparison == 0)
+                {
+                    // When they are the same distance from zero, pick the positive number
+                    comparison = this.Number.CompareTo(other.Number);
+                }
+            }
+
+            return comparison;
+        }
     }
 }

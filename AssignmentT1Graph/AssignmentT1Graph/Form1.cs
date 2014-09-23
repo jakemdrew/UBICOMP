@@ -13,6 +13,8 @@ namespace AssignmentT1Graph
             InitializeComponent();
         }
 
+        ArduinoController arduinoController;
+
         private void Form1_Load(object sender, EventArgs e)
         {
             // Get a reference to the GraphPane instance in the ZedGraphControl
@@ -49,10 +51,21 @@ namespace AssignmentT1Graph
             zg1.AxisChange();
 
             //Create a reference to my Arduino controller.
-            ArduinoController arduinoController = new ArduinoController(zg1);
+            arduinoController = new ArduinoController(zg1);
 
             //Send command to start getting readings from arduino 
             arduinoController.sendCmd(ArduinoControllerCmd.sampleA0);
+        }
+
+        private void btnLearn_Click(object sender, EventArgs e)
+        {
+            arduinoController.Learn(txtLearnName.Text);
+            MessageBox.Show("Learning Completed!");
+        }
+
+        private void btnPredict_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show(arduinoController.Predict(),"Prediction");
         }
     }
 }
