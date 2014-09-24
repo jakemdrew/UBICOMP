@@ -19,7 +19,7 @@ namespace Arduino
         public SerialPort ArduinoPort = null;
 
         //Learning Variables
-        const int learnSampleSize = 15000;
+        const int learnSampleSize = 300;
         Dictionary<double, string> voltSignature = new Dictionary<double, string>();
 
         //Rolling stats variables
@@ -135,7 +135,7 @@ namespace Arduino
                 rollingAvg = rollingAvgSum / learnSampleSize;
             }
 
-            rollCt = rollCt <= long.MaxValue ? rollCt++ : 0;
+            rollCt++;
         }
 
         public void Learn(string learnName)
