@@ -135,7 +135,7 @@ namespace Arduino
                 rollingAvg = rollingAvgSum / learnSampleSize;
             }
 
-            rollCt++;
+            rollCt = rollCt <= long.MaxValue ? rollCt + 1 : 0;
         }
 
         public void Learn(string learnName)
