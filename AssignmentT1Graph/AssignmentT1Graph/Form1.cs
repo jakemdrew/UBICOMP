@@ -59,13 +59,21 @@ namespace AssignmentT1Graph
 
         private void btnLearn_Click(object sender, EventArgs e)
         {
-            arduinoController.Learn(txtLearnName.Text);
-            MessageBox.Show("Learning Completed!");
+            string className = txtLearnName.Text;
+            System.Threading.ThreadPool.QueueUserWorkItem(delegate(object state)
+            {
+                arduinoController.Learn(className);
+                MessageBox.Show("Learning Completed!");
+            });
+            txtLearnName.Text = "";
         }
 
         private void btnPredict_Click(object sender, EventArgs e)
         {
-            MessageBox.Show(arduinoController.Predict(),"Prediction");
+            System.Threading.ThreadPool.QueueUserWorkItem(delegate(object state)
+            {
+                MessageBox.Show(arduinoController.Predict(), "Prediction");
+            });
         }
     }
 }
