@@ -19,12 +19,11 @@ namespace Arduino
         public SerialPort ArduinoPort = null;
 
         //Learning Variables
-        const int learnSampleSize = 300;
+        const int learnSampleSize = 1000;
         Dictionary<double, string> voltSignature = new Dictionary<double, string>();
 
         //Rolling stats variables
         public Queue<double> rollingAvgVolts;
-        public double rollingAvgSum = 0;
         public double rollingAvg = -9999999;
         public long rollCt = 0;
 
@@ -122,7 +121,6 @@ namespace Arduino
 
         public void updateStats(double volt)
         {
-            rollingAvgSum += volt;
 
             if (rollingAvgVolts.Count < learnSampleSize)
             {
@@ -130,9 +128,8 @@ namespace Arduino
             }
             else
             {
-                double subtVolt = rollingAvgVolts.Dequeue();
-                rollingAvgSum -= subtVolt;
-                rollingAvg = rollingAvgSum / learnSampleSize;
+                rollingAvgVolts.Dequeue();
+                rollingAvg = rollingAvgVolts.Sum() / (double)learnSampleSize;
             }
 
             rollCt = rollCt <= long.MaxValue ? rollCt + 1 : 0;
@@ -155,10 +152,10 @@ namespace Arduino
         public string Predict()
         {
             rollCt = 0;
-            double halfCt = (double)learnSampleSize / 2;
+            //double halfCt = (double)learnSampleSize / 2;
 
             //Wait till we have captured a big enough sample
-            while (rollCt < halfCt)
+            while (rollCt < learnSampleSize)
             {
                 Thread.Sleep(10);
             }

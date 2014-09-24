@@ -15,3 +15,5 @@ C:\Users\Jake\Documents\GitHub\UBICOMP\AssignmentT1Graph\AssignmentT1Graph\obj\D
 C:\Users\Jake\Documents\GitHub\UBICOMP\AssignmentT1Graph\AssignmentT1Graph\obj\Debug\AssignmentT1Graph.Form1.resources
 C:\Users\Jake\Documents\GitHub\UBICOMP\AssignmentT1Graph\AssignmentT1Graph\obj\Debug\AssignmentT1Graph.Properties.Resources.resources
 C:\Users\Jake\Documents\GitHub\UBICOMP\AssignmentT1Graph\AssignmentT1Graph\obj\Debug\AssignmentT1Graph.csproj.GenerateResource.Cache
+C:\Users\Jake\Documents\GitHub\UBICOMP\AssignmentT1Graph\AssignmentT1Graph\bin\Debug\AssignmentT1Graph.exe
+C:\Users\Jake\Documents\GitHub\UBICOMP\AssignmentT1Graph\AssignmentT1Graph\bin\Debug\AssignmentT1Graph.pdb
